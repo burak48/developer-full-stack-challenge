@@ -2,3 +2,6 @@ fastapi==0.95.2
 uvicorn==0.22.0
 black==23.3.0
 ruff==0.0.272
+pydantic==1.10.9
+SQLAlchemy==2.0.17
+psycopg2==2.9.6
