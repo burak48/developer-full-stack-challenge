@@ -28,9 +28,22 @@
                 :fixed="fixed"
                 :no-border-collapse="noCollapse"
                 :head-variant="headVariant"
+                :busy="isBusy"
                 responsive
                 @row-clicked="showEditModal">
+                <template #table-busy>
+                    <div class="text-center text-danger my-2">
+                        <b-spinner class="align-middle"></b-spinner>
+                    </div>
+                </template>
             </b-table>
+            <b-pagination 
+                v-model="currentPage"
+                :total-rows="totalRows"
+                :per-page="perPage"
+                size="sm"
+                class="my-0">
+            </b-pagination>
         </b-container>
 
         <!-- Add Author Modal -->
@@ -129,7 +142,8 @@ export default {
             headVariant: 'dark',
             noCollapse: true,
             pagination: true,
-            booksData: []
+            booksData: [],
+            isBusy: true,
         }
     },
     methods: {
@@ -138,6 +152,7 @@ export default {
                 const response = await axios.get('http://localhost:8000/authors');
                 this.authors = response.data;
                 this.totalRows = this.authors.length;
+                this.isBusy = !this.isBusy
             } catch (error) {
                 console.error(error);
             }

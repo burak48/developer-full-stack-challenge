@@ -60,4 +60,9 @@ export default {
 
     // Build Configuration: https://go.nuxtjs.dev/config-build
     build: {},
+
+    // Router property -  https://nuxtjs.org/docs/2.x/features/file-system-routing#the-router-property
+    router: {
+        middleware: ['auth'],
+    }
 };
