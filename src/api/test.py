@@ -6,6 +6,7 @@ from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 from passlib.context import CryptContext
 from jose import JWTError, jwt
+from pydantic import BaseModel
 
 
 SECRET_KEY = "supersecretkey"
@@ -170,6 +171,44 @@ async def get_books():
     ]
     session.close()
     return JSONResponse(content=books_data)
+
+class BookCreate(BaseModel):
+    name: str
+    page_numbers: int
+    author: str
+
+
+@app.post('/books')
+def create_book(book: BookCreate):
+    print("BOOK: ", book)
+    new_book = Book(name=book.name, pages=book.page_numbers, author=book.author)
+    session.add(new_book)
+    session.commit()
+    session.refresh(new_book)
+    print("NEW BOOK: ", new_book)
+    return new_book
+
+
+# @app.put("/books/{book_id}")
+# def update_book(book_id: int, book: Book):
+#     existing_book = session.query(Book).get(book_id)
+#     if existing_book:
+#         existing_book.name = book.name
+#         existing_book.pages = book.pages
+#         existing_book.author = book.author
+#         session.commit()
+#         return existing_book
+#     return {"error": "Book not found"}
+
+
+# @app.delete("/books/{book_id}")
+# def delete_book(book_id: int):
+#     existing_book = session.query(Book).get(book_id)
+#     if existing_book:
+#         session.delete(existing_book)
+#         session.commit()
+#         return {"message": "Book deleted successfully"}
+#     return {"error": "Book not found"}
 
 
 @app.get('/authors')

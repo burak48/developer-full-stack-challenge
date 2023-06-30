@@ -1,6 +1,6 @@
 <template>
-    <div class="books-container">
-      <b-container class="mt-3">
+  <div class="books-container">
+    <b-container class="mt-3">
       <b-row align-h="between">
         <b-col sm="12" md="9">
           <b-input-group class="mb-3">
@@ -32,18 +32,13 @@
         @row-clicked="showEditModal"
         responsive
       >
-      <template #table-busy>
-        <div class="text-center text-danger my-2">
-          <b-spinner class="align-middle"></b-spinner>
-        </div>
-      </template>
+        <template #table-busy>
+          <div class="text-center text-danger my-2">
+            <b-spinner class="align-middle"></b-spinner>
+          </div>
+        </template>
       </b-table>
-      <b-pagination 
-        v-model="currentPage"
-        :total-rows="totalRows"
-        :per-page="perPage"
-        size="sm"
-        class="my-0">
+      <b-pagination v-model="currentPage" :total-rows="totalRows" :per-page="perPage" size="sm" class="my-0">
       </b-pagination>
     </b-container>
 
@@ -57,12 +52,14 @@
           <b-form-input type="number" v-model="bookForm.pages" required />
         </b-form-group>
         <b-form-group label="Author">
-          <b-form-select
-              id="author-input"
-              v-model="bookForm.author"
-              :options="authors"
-              required
-            ></b-form-select>
+          <treeselect
+            v-model="author"
+            :multiple="false"
+            :options="authorOptions"
+            :clearable="true"
+            placeholder="Select an author"
+          >
+          </treeselect>
         </b-form-group>
       </b-form>
     </b-modal>
@@ -77,101 +74,135 @@
           <b-form-input type="number" v-model="bookForm.pages" required />
         </b-form-group>
         <b-form-group label="Author">
-          <b-form-select
-              id="author-input"
-              v-model="bookForm.author"
-              :options="authors"
-              required
-            ></b-form-select>
+          <treeselect
+            v-model="bookForm.author"
+            :multiple="false"
+            :options="authorOptions"
+            :clearable="true"
+            placeholder="Select an author"
+          >
+          </treeselect>
         </b-form-group>
       </b-form>
     </b-modal>
-    </div>
+  </div>
 </template>
   
 <script>
-import axios from 'axios';
+import Treeselect from '@riophae/vue-treeselect';
+import '@riophae/vue-treeselect/dist/vue-treeselect.css';
+import { mapGetters, mapActions, mapMutations  } from 'vuex';
 
 export default {
-    data() {
-        return {
-            books: [],
-            fields: [
-                { key: 'name', label: 'Name' },
-                { key: 'author', label: 'Author Name' },
-                { key: 'page_numbers', label: 'Number of Pages' }
-            ],
-            searchTerm: '',
-            addModalVisible: false,
-            editModalVisible: false,
-            bookForm: {
-                name: '',
-                pages: '',
-                author: null
-            },
-            perPage: 5,
-            currentPage: 1,
-            totalRows: 1,
-            sortBy: '',
-            sortDesc: false,
-            bordered: true,
-            outlined: true,
-            hover: true,
-            fixed: true,
-            headVariant: 'dark',
-            noCollapse: true,
-            pagination: true,
-            isBusy: true,
-        };
+  components: {
+    Treeselect,
+  },
+  computed: {
+    ...mapGetters(['books', 'authors', 'totalRows', 'isBusy']),
+    ...mapMutations(['setBooks']),
+    authorOptions() {
+      return this.authors.map(author => ({
+        id: author.id,
+        label: author.name
+      }));
     },
-    mounted() {
-        this.fetchBooks();
+  },
+  data() {
+    return {
+      value: [],
+      searchTerm: '',
+      addModalVisible: false,
+      editModalVisible: false,
+      bookForm: {
+        name: '',
+        pages: '',
+        author: null,
+      },
+      perPage: 5,
+      currentPage: 1,
+      sortBy: '',
+      sortDesc: false,
+      bordered: true,
+      outlined: true,
+      hover: true,
+      fixed: true,
+      noCollapse: true,
+      headVariant: 'dark',
+      fields: [
+        { key: 'name', label: 'Name' },
+        { key: 'author', label: 'Author Name' },
+        { key: 'page_numbers', label: 'Number of Pages' },
+      ],
+    };
+  },
+  async mounted() {
+    try {
+      // await this.fetchBooks();
+      const { books, totalRows, isBusy } = await this.fetchBooks();
+      console.log('BOOKS: ', books);
+      console.log('totalRows: ', totalRows);
+      console.log('isBusy: ', isBusy);
+      const { authors } = await this.fetchAuthors();
+      console.log("AUTHORS: ", authors)
+    } catch (error) {
+      console.error(error);
+    }
+  },
+  methods: {
+    ...mapActions(['fetchBooks', 'fetchAuthors', 'createBook', 'updateBook']),
+    showAddModal() {
+      this.addModalVisible = true;
+      this.bookForm = {
+        name: '',
+        pages: null,
+        author: null,
+      };
     },
-    methods: {
-        async fetchBooks() {
-            try {
-                const response = await axios.get('http://localhost:8000/books');
-                this.books = response.data;
-                this.totalRows = this.books.length;
-                this.isBusy = !this.isBusy
-            } catch (error) {
-                console.error(error);
-            }
-        },
-        showAddModal() {
-            this.addModalVisible = true
-            this.bookForm = {
-                name: '',
-                pages: null,
-                author: null
-            };
-        },
-        showEditModal(book) {
-            this.editModalVisible = true
-            this.bookForm = {
-                name: book.name,
-                pages: book.page_numbers,
-                author: book.id
-            };
-        },
-        addBook() {
-            this.createBook(this.bookForm)
-            this.addModalVisible = false
-            this.bookForm = {
-                name: '',
-                pages: '',
-                author: null
-            }
-        },
-        saveBook() {
-            this.editModalVisible = false
-        }
+    showEditModal(book) {
+      this.editModalVisible = true;
+      console.log("book: ", book)
+      this.bookForm = {
+        name: book.name,
+        pages: book.page_numbers,
+        author: book.id,
+      };
     },
+    async addBook() {
+      this.createBook(this.bookForm).then(() => {
+        this.setBooks();
+      });
+      this.addModalVisible = false;
+      this.bookForm = {
+        name: '',
+        pages: '',
+        author: null,
+      };
+      // const createdBook = await this.createBook(this.bookForm);
+      // console.log("CREATEDBOOK FS:", createdBook)
+      // if (createdBook) {
+      //   console.log('Created Book:', createdBook);
+      //   this.addModalVisible = false;
+      //   this.bookForm = {
+      //     name: '',
+      //     pages: '',
+      //     author: null,
+      //   };
+      // } else {
+      //   console.error('Failed to create book');
+      // }
+    },
+    saveBook() {
+      this.editModalVisible = false;
+      this.updateBook(this.bookForm).then(() => {
+        this.setBooks();
+      });
+    },
+  },
 };
 </script>
   
 <style scoped>
 .books-container {
-    margin-top: 2rem;
+  margin-top: 2rem;
 }
 </style>
