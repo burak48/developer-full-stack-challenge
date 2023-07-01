@@ -43,17 +43,17 @@
     </b-container>
 
     <!-- Add Book Modal -->
-    <b-modal v-model="addModalVisible" title="Add Book">
-      <b-form @submit="addBook">
+    <b-modal v-model="addModalVisible" title="Add Book" hide-footer @show="resetBookForm">
+      <b-form @submit.prevent="addBook">
         <b-form-group label="Name">
           <b-form-input v-model="bookForm.name" required />
         </b-form-group>
         <b-form-group label="Number of Pages">
-          <b-form-input type="number" v-model="bookForm.pages" required />
+          <b-form-input type="number" v-model="bookForm.page_numbers" required />
         </b-form-group>
         <b-form-group label="Author">
           <treeselect
-            v-model="author"
+            v-model="bookForm.author"
             :multiple="false"
             :options="authorOptions"
             :clearable="true"
@@ -61,6 +61,8 @@
           >
           </treeselect>
         </b-form-group>
+        <b-button variant="secondary" @click="addModalVisible = false">Cancel</b-button>
+        <b-button type="submit" variant="primary">OK</b-button>
       </b-form>
     </b-modal>
 
@@ -71,11 +73,11 @@
           <b-form-input v-model="bookForm.name" required />
         </b-form-group>
         <b-form-group label="Number of Pages">
-          <b-form-input type="number" v-model="bookForm.pages" required />
+          <b-form-input type="number" v-model="bookForm.page_numbers" required />
         </b-form-group>
         <b-form-group label="Author">
           <treeselect
-            v-model="bookForm.author"
+            v-model="bookForm.author_id"
             :multiple="false"
             :options="authorOptions"
             :clearable="true"
@@ -115,8 +117,9 @@ export default {
       editModalVisible: false,
       bookForm: {
         name: '',
-        pages: '',
-        author: null,
+        page_numbers: null,
+        author_id: null,
+        author: ''
       },
       perPage: 5,
       currentPage: 1,
@@ -148,48 +151,52 @@ export default {
       console.error(error);
     }
   },
+  watch: {
+    books: {
+      immediate: true,
+      handler(newBooks) {
+        console.log('Updated books:', newBooks);
+      }
+    },
+    searchTerm() {
+      this.currentPage = 1;
+    }
+},
   methods: {
-    ...mapActions(['fetchBooks', 'fetchAuthors', 'createBook', 'updateBook']),
+    ...mapActions(['fetchBooks', 'fetchAuthors', 'addBook', 'updateBook']),
     showAddModal() {
       this.addModalVisible = true;
       this.bookForm = {
-        name: '',
-        pages: null,
-        author: null,
+        name: null,
+        page_numbers: null,
+        author_id: null,
+        author: null
       };
+    },
+    resetBookForm() {
+      this.bookForm.author = null;
     },
     showEditModal(book) {
       this.editModalVisible = true;
       console.log("book: ", book)
       this.bookForm = {
         name: book.name,
-        pages: book.page_numbers,
-        author: book.id,
+        page_numbers: book.page_numbers,
+        author_id: book.author_id,
+        author: book.author
       };
     },
     async addBook() {
-      this.createBook(this.bookForm).then(() => {
-        this.setBooks();
-      });
+      this.bookForm.page_numbers = parseInt(this.bookForm.page_numbers);
+      this.bookForm.author_id = this.bookForm.author;
+
+      // Fetch the author name from authorOptions
+      const selectedAuthor = this.authorOptions.find(author => author.id === this.bookForm.author_id);
+      this.bookForm.author_name = selectedAuthor.label;
+      console.log("SELECTED AUTHOR: ", selectedAuthor)
+      
+      this.$store.dispatch('addBook', this.bookForm);
       this.addModalVisible = false;
-      this.bookForm = {
-        name: '',
-        pages: '',
-        author: null,
-      };
-      // const createdBook = await this.createBook(this.bookForm);
-      // console.log("CREATEDBOOK FS:", createdBook)
-      // if (createdBook) {
-      //   console.log('Created Book:', createdBook);
-      //   this.addModalVisible = false;
-      //   this.bookForm = {
-      //     name: '',
-      //     pages: '',
-      //     author: null,
-      //   };
-      // } else {
-      //   console.error('Failed to create book');
-      // }
     },
     saveBook() {
       this.editModalVisible = false;

@@ -33,6 +33,9 @@ const store = () => {
             },
             addBook(state, book) {
                 state.books.push(book);
+
+                // Trigger reactivity using Vue.set
+                Vue.set(state, 'books', [...state.books]);
             },
             updateBook(state, updatedBook) {
                 const index = state.books.findIndex(book => book.id === updatedBook.id);
@@ -74,10 +77,11 @@ const store = () => {
                     console.error(error);
                 }
             },
-            async createBook({ commit }, book) {
+            async addBook({ commit }, book) {
                 try {
                     const response = await axios.post('http://localhost:8000/books', book);
                     const createdBook = response.data;
+                    console.log("CREATED BOOK: ", createdBook)
                     commit('addBook', createdBook);
                 } catch (error) {
                     console.error(error);

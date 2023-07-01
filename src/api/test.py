@@ -165,6 +165,7 @@ async def get_books():
             'id': book.id,
             'name': book.name,
             'page_numbers': book.page_numbers,
+            'author_id': book.author_id,
             'author': book.author.name
         }
         for book in books
@@ -175,13 +176,13 @@ async def get_books():
 class BookCreate(BaseModel):
     name: str
     page_numbers: int
-    author: str
+    author_id: int
 
 
 @app.post('/books')
 def create_book(book: BookCreate):
     print("BOOK: ", book)
-    new_book = Book(name=book.name, pages=book.page_numbers, author=book.author)
+    new_book = Book(name=book.name, page_numbers=book.page_numbers, author_id=book.author_id)
     session.add(new_book)
     session.commit()
     session.refresh(new_book)
