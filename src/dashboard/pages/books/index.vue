@@ -143,13 +143,8 @@ export default {
   },
   async mounted() {
     try {
-      // await this.fetchBooks();
       const { books, totalRows, isBusy } = await this.fetchBooks();
-      console.log('BOOKS: ', books);
-      console.log('totalRows: ', totalRows);
-      console.log('isBusy: ', isBusy);
       const { authors } = await this.fetchAuthors();
-      console.log("AUTHORS: ", authors)
     } catch (error) {
       console.error(error);
     }
@@ -157,9 +152,7 @@ export default {
   watch: {
     books: {
       immediate: true,
-      handler(newBooks) {
-        console.log('Updated books:', newBooks);
-      }
+      handler(newBooks) {}
     },
     searchTerm() {
       this.currentPage = 1;

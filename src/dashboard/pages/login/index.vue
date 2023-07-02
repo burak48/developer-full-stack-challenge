@@ -37,12 +37,11 @@ export default {
                 password: this.password,
             })
                 .then(response => {
-                    console.log("RESPONSE: ", response.data);
                     localStorage.setItem('accessToken', `${response.data.access_token}`)
                     this.$router.push('/books')
                 })
                 .catch(error => {
-                    console.error('Error:', error);
+                    console.error(error);
                 });
         }
     }

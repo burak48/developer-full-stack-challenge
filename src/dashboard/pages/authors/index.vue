@@ -170,9 +170,6 @@ export default {
   async mounted() {
     try {
       const { authors, authorsTotalRows, authorsIsBusy } = await this.fetchAuthors();
-      console.log('AUTHORS: ', authors);
-      console.log('authorsTotalRows: ', authorsTotalRows);
-      console.log('authorsIsBusy: ', authorsIsBusy);
     } catch (error) {
       console.error(error);
     }
