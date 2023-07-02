@@ -8,15 +8,19 @@ const store = () => {
     return new Vuex.Store({
         state: {
             books: [],
-            authors: [],
             totalRows: 1,
             isBusy: true,
+            authors: [],
+            authorsTotalRows: 1,
+            authorsIsBusy: true,
         },
         getters: {
             books: state => state.books,
             authors: state => state.authors,
             totalRows: state => state.totalRows,
-            isBusy: state => state.isBusy
+            isBusy: state => state.isBusy,
+            authorsTotalRows: state => state.authorsTotalRows,
+            authorsIsBusy: state => state.authorsIsBusy,
         },
         mutations: {
             setBooks(state, books) {
@@ -27,6 +31,12 @@ const store = () => {
             },
             setTotalRows(state, totalRows) {
                 state.totalRows = totalRows
+            },
+            setAuthorsTotalRows(state, authorsTotalRows) {
+                state.authorsTotalRows = authorsTotalRows
+            },
+            setAuthorsIsBusy(state, authorsIsBusy) {
+                state.authorsIsBusy = authorsIsBusy
             },
             setIsBusy(state, isBusy) {
                 state.isBusy = isBusy
@@ -44,7 +54,23 @@ const store = () => {
                 }
             },
             deleteBook(state, bookId) {
-                state.books = state.books.filter(book => book.id !== bookId);
+                const index = state.books.findIndex((book) => book.id === bookId);
+                if (index !== -1) {
+                    Vue.set(state.books, index, null);
+                    state.books.splice(index, 1);
+                }
+            },
+            addAuthor(state, author) {
+                state.authors.push(author);
+
+                // Trigger reactivity using Vue.set
+                Vue.set(state, 'authors', [...state.authors]);
+            },
+            updateAuthor(state, updatedAuthor) {
+                const index = state.authors.findIndex(author => author.id === updatedAuthor.id);
+                if (index !== -1) {
+                    Vue.set(state.authors, index, updatedAuthor);
+                }
             },
         },
         actions: {
@@ -52,7 +78,6 @@ const store = () => {
                 try {
                     const response = await axios.get('http://localhost:8000/books');
                     const books = response.data;
-                    console.log("DATA: ", books)
                     commit('setBooks', books);
                     const totalRows = books.length;
                     commit('setTotalRows', totalRows);
@@ -69,10 +94,12 @@ const store = () => {
                 try {
                     const response = await axios.get('http://localhost:8000/authors');
                     const authors = response.data;
-                    console.log("AU DATA: ", authors)
                     commit('setAuthors', authors);
-                    // return this.state.authors;
-                    return { authors }
+                    const authorsTotalRows = authors.length;
+                    commit('setAuthorsTotalRows', authorsTotalRows);
+                    const authorsIsBusy = false;
+                    commit('setAuthorsIsBusy', authorsIsBusy);
+                    return { authors, authorsTotalRows, authorsIsBusy };
                 } catch (error) {
                     console.error(error);
                 }
@@ -81,7 +108,6 @@ const store = () => {
                 try {
                     const response = await axios.post('http://localhost:8000/books', book);
                     const createdBook = response.data;
-                    console.log("CREATED BOOK: ", createdBook)
                     commit('addBook', createdBook);
                 } catch (error) {
                     console.error(error);
@@ -89,16 +115,35 @@ const store = () => {
             },
             async updateBook({ commit }, book) {
                 try {
-                    await axios.put(`http://localhost:8000/books/${book.id}`, book);
-                    commit('updateBook', book);
+                    const response = await axios.put(`http://localhost:8000/books/${book.id}`, book);
+                    const updatedBook = response.data;
+                    commit('updateBook', updatedBook);
                 } catch (error) {
                     console.error(error);
                 }
             },
-            async deleteBook({ commit }, bookId) {
+            async deleteBook({ commit }, book) {
                 try {
-                    await axios.delete(`http://localhost:8000/books/${bookId}`);
-                    commit('deleteBook', bookId);
+                    const response = await axios.delete(`http://localhost:8000/books/${book.id}`);
+                    commit('deleteBook', book.id);
+                } catch (error) {
+                    console.error(error);
+                }
+            },
+            async addAuthor({ commit }, author) {
+                try {
+                    const response = await axios.post('http://localhost:8000/authors', author);
+                    const createdAuthor = response.data;
+                    commit('addAuthor', createdAuthor);
+                } catch (error) {
+                    console.error(error);
+                }
+            },
+            async updateAuthor({ commit }, author) {
+                try {
+                    const response = await axios.put(`http://localhost:8000/authors/${author.id}`, author);
+                    const updatedAuthor = response.data;
+                    commit('updateAuthor', updatedAuthor);
                 } catch (error) {
                     console.error(error);
                 }

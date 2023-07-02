@@ -67,8 +67,8 @@
     </b-modal>
 
     <!-- Edit Book Modal -->
-    <b-modal v-model="editModalVisible" title="Edit Book">
-      <b-form @submit="saveBook">
+    <b-modal v-model="editModalVisible" title="Edit Book" hide-footer>
+      <b-form @submit.prevent="saveBook">
         <b-form-group label="Name">
           <b-form-input v-model="bookForm.name" required />
         </b-form-group>
@@ -77,7 +77,7 @@
         </b-form-group>
         <b-form-group label="Author">
           <treeselect
-            v-model="bookForm.author_id"
+            v-model="bookForm.author"
             :multiple="false"
             :options="authorOptions"
             :clearable="true"
@@ -85,6 +85,8 @@
           >
           </treeselect>
         </b-form-group>
+        <b-button variant="secondary" @click="editModalVisible = false">Cancel</b-button>
+        <b-button type="submit" variant="primary">OK</b-button>
       </b-form>
     </b-modal>
   </div>
@@ -116,6 +118,7 @@ export default {
       addModalVisible: false,
       editModalVisible: false,
       bookForm: {
+        id: null,
         name: '',
         page_numbers: null,
         author_id: null,
@@ -160,13 +163,17 @@ export default {
     },
     searchTerm() {
       this.currentPage = 1;
-    }
+    },
+    async updateBook(newBook) {
+      await this.fetchBooks();
+    },
 },
   methods: {
     ...mapActions(['fetchBooks', 'fetchAuthors', 'addBook', 'updateBook']),
     showAddModal() {
       this.addModalVisible = true;
       this.bookForm = {
+        id: null,
         name: null,
         page_numbers: null,
         author_id: null,
@@ -178,8 +185,8 @@ export default {
     },
     showEditModal(book) {
       this.editModalVisible = true;
-      console.log("book: ", book)
       this.bookForm = {
+        id: book.id,
         name: book.name,
         page_numbers: book.page_numbers,
         author_id: book.author_id,
@@ -192,17 +199,17 @@ export default {
 
       // Fetch the author name from authorOptions
       const selectedAuthor = this.authorOptions.find(author => author.id === this.bookForm.author_id);
-      this.bookForm.author_name = selectedAuthor.label;
-      console.log("SELECTED AUTHOR: ", selectedAuthor)
+      this.bookForm.author = selectedAuthor.label;
       
       this.$store.dispatch('addBook', this.bookForm);
       this.addModalVisible = false;
     },
     saveBook() {
+      this.bookForm.id = parseInt(this.bookForm.id);
+      this.bookForm.page_numbers = parseInt(this.bookForm.page_numbers);
+
+      this.$store.dispatch('updateBook', this.bookForm);
       this.editModalVisible = false;
-      this.updateBook(this.bookForm).then(() => {
-        this.setBooks();
-      });
     },
   },
 };

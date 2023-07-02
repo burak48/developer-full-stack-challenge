@@ -174,42 +174,48 @@ async def get_books():
     return JSONResponse(content=books_data)
 
 class BookCreate(BaseModel):
+    id: int
     name: str
     page_numbers: int
     author_id: int
 
 
+class AuthorCreate(BaseModel):
+    id: int
+    name: str
+
+
+
 @app.post('/books')
 def create_book(book: BookCreate):
-    print("BOOK: ", book)
     new_book = Book(name=book.name, page_numbers=book.page_numbers, author_id=book.author_id)
     session.add(new_book)
     session.commit()
     session.refresh(new_book)
-    print("NEW BOOK: ", new_book)
     return new_book
 
 
-# @app.put("/books/{book_id}")
-# def update_book(book_id: int, book: Book):
-#     existing_book = session.query(Book).get(book_id)
-#     if existing_book:
-#         existing_book.name = book.name
-#         existing_book.pages = book.pages
-#         existing_book.author = book.author
-#         session.commit()
-#         return existing_book
-#     return {"error": "Book not found"}
+@app.put("/books/{book_id}")
+def update_book(book_id: int, book: BookCreate):
+    existing_book = session.query(Book).get(book_id)
+    # if existing_book:
+    existing_book.name = book.name
+    existing_book.page_numbers = book.page_numbers
+    existing_book.author_id = book.author_id
+    session.commit()
+    session.refresh(existing_book)
+    return existing_book
+    # return {"error": "Book not found"}
 
 
-# @app.delete("/books/{book_id}")
-# def delete_book(book_id: int):
-#     existing_book = session.query(Book).get(book_id)
-#     if existing_book:
-#         session.delete(existing_book)
-#         session.commit()
-#         return {"message": "Book deleted successfully"}
-#     return {"error": "Book not found"}
+@app.delete("/books/{book_id}")
+def delete_book(book_id: int):
+    existing_book = session.query(Book).get(book_id)
+    if existing_book:
+        session.delete(existing_book)
+        session.commit()
+        return {"message": "Book deleted successfully"}
+    return {"error": "Book not found"}
 
 
 @app.get('/authors')
@@ -222,6 +228,7 @@ async def get_authors():
             'book_count': len(author.books),
             'books': [
                 {
+                    'id': book.id,
                     'name': book.name,
                     'page_numbers': book.page_numbers
                 } 
@@ -232,6 +239,25 @@ async def get_authors():
     ]
     session.close()
     return JSONResponse(content=authors_data)
+
+@app.post('/authors')
+def create_author(author: AuthorCreate):
+    new_author = Author(name=author.name)
+    session.add(new_author)
+    session.commit()
+    session.refresh(new_author)
+    return new_author
+
+@app.put("/authors/{author_id}")
+def update_author(author_id: int, author: AuthorCreate):
+    existing_author = session.query(Author).get(author_id)
+    # if existing_book:
+    existing_author.name = author.name
+    existing_author.id = author.id
+    session.commit()
+    session.refresh(existing_author)
+    return existing_author
+    # return {"error": "Book not found"}
 
 @app.get("/test")
 def protected_route(credentials: HTTPAuthorizationCredentials = Depends(security)):
